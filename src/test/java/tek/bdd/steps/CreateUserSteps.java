@@ -40,7 +40,6 @@ public class CreateUserSteps extends SeleniumUtilities {
         clickOnElement(CreateUserPage.SIGNUP_BUTTON);
 
     }
-
     @Then("Validate the Name in Profile as {string}")
     public void validate_the_name_in_profile_as(String expectedName) {
 
