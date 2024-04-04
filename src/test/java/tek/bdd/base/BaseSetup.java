@@ -1,64 +1,80 @@
 package tek.bdd.base;
 
 
+import io.cucumber.java.an.E;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.safari.SafariDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
 
 public class BaseSetup {
     private static WebDriver driver;
-    private final Properties properties = new Properties();// to read the configFile
+    private final Properties properties = new Properties();
 
-
-    public BaseSetup(){
+    //Constructor
+    public BaseSetup() {
+        // To read a Properties file. 1) File in System.
+        // 2) FileInputStream, 3) Object of Properties Class. to Load
+        //File Location       System.getProperty("user.dir") return location of Project
         try {
+            String fileFilePath = System.getProperty("user.dir")
+                    + "/src/test/resources/config/application-config.properties";
+            File propertiesFile = new File(fileFilePath);
+            FileInputStream propertyFileInputStream = new FileInputStream(propertiesFile);
 
-            String filePathInfo = System.getProperty("user.dir")+"/src/test/resources/config/application-config.properties";
+            properties.load(propertyFileInputStream);
 
-            File propertiesFile = new File(filePathInfo);
-            FileInputStream fileInputStream = new FileInputStream(propertiesFile);
-            properties.load(fileInputStream);// read content of the file
-        }catch (Exception e){
-            throw new RuntimeException("File Not Found or Run Time Exception");
-
+        } catch (IOException ex) {
+            throw new RuntimeException("Can not read or load config file "
+                    + ex.getMessage());
         }
 
     }
 
-    public void openBrowser()  {
 
+    public void openBrowser() {
+        //Read browser type from Properties file
         String browserType = this.properties.getProperty("retail.browser.type");
+        boolean isHeadless = Boolean.parseBoolean(
+                this.properties.getProperty("retail.browser.headless"));
 
-        if(browserType.equalsIgnoreCase("chrome")){
-            driver = new ChromeDriver();
-        }else if (browserType.equalsIgnoreCase("edge")){
-            driver = new EdgeDriver();
-        }else if (browserType.equalsIgnoreCase("safari")){
-            driver = new SafariDriver();
-        }else if (browserType.equalsIgnoreCase("firefox")){
-            driver = new FirefoxDriver();
-        }else {
-            System.out.println("You have entered an invalid value in Browser Type");
-            //throw new RuntimeException("Invalid browser type: Only chrome, edge, safair and firefox");
+        if (browserType.equalsIgnoreCase("chrome")) {
+            ChromeOptions options = new ChromeOptions();
+            if (isHeadless)
+                options.addArguments("--headless");
+            driver = new ChromeDriver(options);
+        } else if (browserType.equalsIgnoreCase("edge")) {
+            EdgeOptions options = new EdgeOptions();
+            if (isHeadless)
+                options.addArguments("--headless");
+            driver = new EdgeDriver(options);
+        } else if (browserType.equalsIgnoreCase("firefox")) {
+            FirefoxOptions options = new FirefoxOptions();
+            if (isHeadless)
+                options.addArguments("--headless");
+            driver = new FirefoxDriver(options);
         }
-        String tekURL =  this.properties.getProperty("retail.ui.url");
+        else {
+            throw new RuntimeException("Wrong browser Type");
+        }
 
-        driver.get(tekURL);
         driver.manage().window().maximize();
+        //Get Url from Property File
+        String url = this.properties.getProperty("retail.ui.url");
+        driver.get(url);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
+
     public WebDriver getDriver() {
         return driver;
     }
-
-
-
-
 }
